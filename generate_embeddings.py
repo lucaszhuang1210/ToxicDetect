@@ -5,13 +5,19 @@ import re
 import torch
 from sentence_transformers import SentenceTransformer
 
-# Path to the training data
-data_file = os.path.join('.', 'data', 'train.csv')
-if not os.path.exists(data_file):
-    raise FileNotFoundError(f"Data file not found: {data_file}. Please ensure it exists in the './data/' directory.")
+# Define paths for training and test data
+train_file = os.path.join('.', 'data', 'train.csv')
+test_file = os.path.join('.', 'data', 'test.csv')
+
+# Check if files exist
+if not os.path.exists(train_file):
+    raise FileNotFoundError(f"Training file not found: {train_file}.")
+if not os.path.exists(test_file):
+    raise FileNotFoundError(f"Test file not found: {test_file}.")
 
 # Load the data
-df = pd.read_csv(data_file)
+df_train = pd.read_csv(train_file)
+df_test = pd.read_csv(test_file)
 
 # Define a basic text cleaning function
 def clean_text(text):
@@ -19,8 +25,9 @@ def clean_text(text):
     text = re.sub(r'[^a-z\s]', '', text)
     return re.sub(r'\s+', ' ', text).strip()
 
-# Clean the comments
-df['clean_comment'] = df['comment_text'].apply(clean_text)
+# Clean the comments in both datasets
+df_train['clean_comment'] = df_train['comment_text'].apply(clean_text)
+df_test['clean_comment'] = df_test['comment_text'].apply(clean_text)
 
 # Set device (GPU if available, otherwise CPU)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -29,9 +36,11 @@ print(f'Using device: {device}')
 # Initialize the Sentence-BERT model
 model = SentenceTransformer('all-MiniLM-L6-v2', device=device)
 
-# Encode the cleaned comments into embeddings
-embeddings = model.encode(df['clean_comment'].tolist(), show_progress_bar=True)
+# Generate embeddings for training and test data
+embeddings_train = model.encode(df_train['clean_comment'].tolist(), show_progress_bar=True)
+embeddings_test = model.encode(df_test['clean_comment'].tolist(), show_progress_bar=True)
 
-# Save the embeddings to a NumPy file
-np.save('embeddings.npy', embeddings)
-print("Embeddings saved to 'embeddings.npy'")
+# Save the embeddings to separate NumPy files
+np.save('embeddings_train.npy', embeddings_train)
+np.save('embeddings_test.npy', embeddings_test)
+print("Embeddings saved to 'embeddings_train.npy' and 'embeddings_test.npy'")

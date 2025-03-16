@@ -1,2 +1,5 @@
 .DS_Store
 embeddings.npy
+embeddings_test.npy
+embeddings_train.npy
+sbert_predictions.csv
